@@ -10,7 +10,7 @@ const Footer = () => (
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <Briefcase className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-display font-bold text-lg text-background">HireAI</span>
+            <span className="font-display font-bold text-lg text-background">AI Job Portal</span>
           </div>
           <p className="text-sm leading-relaxed">
             AI-powered job matching that connects talent with opportunity. Find your dream career today.
@@ -42,7 +42,7 @@ const Footer = () => (
         </div>
       </div>
       <div className="mt-12 pt-8 border-t border-background/10 text-center text-sm">
-        © 2026 HireAI. All rights reserved.
+        © 2026 AI Job Portal. All rights reserved.
       </div>
     </div>
   </footer>
