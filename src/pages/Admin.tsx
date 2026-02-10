@@ -45,7 +45,7 @@ const Admin = () => {
           <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
             <Briefcase className="w-4 h-4 text-sidebar-primary-foreground" />
           </div>
-          <span className="font-display font-bold text-sidebar-foreground">HireAI Admin</span>
+          <span className="font-display font-bold text-sidebar-foreground">AI Job Portal</span>
         </Link>
         <nav className="space-y-1 flex-1">
           {sidebarItems.map((item) => (

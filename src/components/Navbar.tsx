@@ -26,7 +26,7 @@ const Navbar = () => {
               <Briefcase className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className={`font-display font-bold text-xl tracking-tight ${isHero ? "text-primary-foreground" : "text-foreground"}`}>
-              HireAI
+              AI Job Portal
             </span>
           </Link>
 

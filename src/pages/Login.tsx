@@ -40,7 +40,7 @@ const Login = () => {
               <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center glow">
                 <Briefcase className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="font-display font-bold text-2xl text-foreground">HireAI</span>
+              <span className="font-display font-bold text-2xl text-foreground">AI Job Portal</span>
             </Link>
             <h1 className="text-2xl font-display font-bold text-foreground">Welcome back</h1>
             <p className="text-muted-foreground mt-1">Sign in to your account</p>

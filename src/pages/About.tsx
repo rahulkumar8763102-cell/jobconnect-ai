@@ -15,7 +15,7 @@ const About = () => (
     <Navbar />
     <div className="pt-24 pb-20 container mx-auto px-4 lg:px-8 max-w-4xl">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
-        <h1 className="font-display text-4xl font-bold">About <span className="text-gradient">HireAI</span></h1>
+        <h1 className="font-display text-4xl font-bold">About <span className="text-gradient">AI Job Portal</span></h1>
         <p className="text-muted-foreground text-lg mt-4 max-w-2xl mx-auto leading-relaxed">
           We're on a mission to revolutionize how people find jobs using artificial intelligence. Our platform connects talented professionals with their ideal careers faster than ever.
         </p>
