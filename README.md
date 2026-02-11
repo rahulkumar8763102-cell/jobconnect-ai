@@ -1,73 +1,121 @@
-# Welcome to your Lovable project
+# AI Job Portal — BCA Final Year Project
 
-## Project info
+## 📌 Project Overview
+AI Job Portal is a full-stack web application where users can sign up, search for jobs, and manage their profiles. Admins have full control to view and manage all registered users in real-time.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## 🛠 Tech Stack
 
-## How can I edit this code?
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React + Vite + TypeScript |
+| UI Library | Tailwind CSS + shadcn/ui |
+| Backend (Live) | Lovable Cloud (Supabase) |
+| Backend (Viva) | Python Flask + MySQL |
+| Authentication | Email/Password with JWT |
 
-There are several ways of editing your application.
+## 🚀 How to Run
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### Frontend (React)
+```bash
+npm install
 npm run dev
+# Opens at http://localhost:8080
 ```
 
-**Edit a file directly in GitHub**
+### Backend — Flask (For Local/Viva Demo)
+```bash
+cd flask-backend
+pip install -r requirements.txt
+mysql -u root -p < schema.sql
+python app.py
+# Runs at http://localhost:5000
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 👤 User Features
+- **Sign Up** — Name, email, password stored in database
+- **Login** — Secure authentication with password hashing
+- **Dashboard** — View profile info and browse jobs
+- **Job Search** — Filter jobs by keyword, type, location
+- **Logout** — Secure session termination
 
-**Use GitHub Codespaces**
+## 🛡 Admin Features
+- **Separate Admin Panel** — Professional dashboard UI
+- **View All Users** — Name, email, join date in a table
+- **Delete Users** — Remove users from the database
+- **Real-time Data** — Users appear instantly after signup
+- **Search Users** — Filter by name or email
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 📂 Project Structure
+```
+ai-job-portal/
+├── src/                    # React Frontend
+│   ├── components/         # Reusable UI components
+│   ├── contexts/           # Auth context (state management)
+│   ├── data/               # Mock job data
+│   ├── pages/              # All page components
+│   │   ├── Index.tsx       # Home page
+│   │   ├── Login.tsx       # User login
+│   │   ├── Register.tsx    # User signup
+│   │   ├── Dashboard.tsx   # User dashboard
+│   │   ├── Admin.tsx       # Admin panel
+│   │   ├── Jobs.tsx        # Job listings
+│   │   └── JobDetail.tsx   # Job details
+│   └── integrations/       # Backend client
+├── flask-backend/          # Flask Backend (Viva Reference)
+│   ├── app.py              # Flask REST APIs
+│   ├── schema.sql          # MySQL database schema
+│   └── requirements.txt    # Python dependencies
+```
 
-## What technologies are used for this project?
+## 🗄 Database Schema (MySQL)
+```sql
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('user', 'admin') DEFAULT 'user',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
 
-This project is built with:
+## 📡 Flask API Endpoints
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/signup` | Register new user |
+| POST | `/login` | User authentication |
+| GET | `/admin/users` | Get all users (admin) |
+| DELETE | `/admin/user/<id>` | Delete user (admin) |
 
-## How can I deploy this project?
+## 🎤 Viva Explanation Points
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+1. **What is the project about?**
+   — AI Job Portal helps job seekers find opportunities. Admins manage users.
 
-## Can I connect a custom domain to my Lovable project?
+2. **What tech stack did you use?**
+   — React for frontend, Flask for backend, MySQL for database.
 
-Yes, you can!
+3. **How does authentication work?**
+   — Passwords are hashed with bcrypt. Login checks hash. Sessions managed with JWT.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+4. **How does admin see users?**
+   — Admin panel calls GET /admin/users API which queries MySQL users table.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+5. **What is CORS and why is it needed?**
+   — Cross-Origin Resource Sharing allows frontend (port 8080) to call backend (port 5000).
+
+6. **What is bcrypt?**
+   — A password hashing library that securely encrypts passwords before storing.
+
+7. **What is REST API?**
+   — Representational State Transfer — uses HTTP methods (GET, POST, DELETE) for communication.
+
+8. **Why React + Vite?**
+   — Vite provides fast development server. React enables component-based UI development.
+
+9. **How is admin different from user?**
+   — Separate login, separate dashboard. Admin has role-based access to manage all users.
+
+10. **What is the AI part?**
+    — AI-powered job matching analyzes user skills to recommend relevant job opportunities.

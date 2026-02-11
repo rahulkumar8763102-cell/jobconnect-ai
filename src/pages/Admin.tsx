@@ -1,51 +1,127 @@
-import { useState } from "react";
-import { BarChart3, Users, Briefcase, Plus, Trash2, Edit, Eye, Settings, LogOut, FileText, TrendingUp, Search } from "lucide-react";
+// Admin.tsx — Admin dashboard with FULL CONTROL
+// Fetches real user data from database, allows deletion
+import { useState, useEffect } from "react";
+import { BarChart3, Users, Briefcase, Trash2, Eye, Settings, LogOut, FileText, TrendingUp, Search, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { mockJobs, Job } from "@/data/jobs";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
+// Sidebar navigation items
 const sidebarItems = [
   { icon: BarChart3, label: "Dashboard", active: true },
+  { icon: Users, label: "All Users" },
   { icon: Briefcase, label: "Manage Jobs" },
-  { icon: Users, label: "Candidates" },
   { icon: FileText, label: "Applications" },
   { icon: TrendingUp, label: "Analytics" },
   { icon: Settings, label: "Settings" },
 ];
 
-const statsCards = [
-  { label: "Total Jobs", value: "248", change: "+12%", icon: Briefcase },
-  { label: "Applications", value: "1,847", change: "+24%", icon: FileText },
-  { label: "Candidates", value: "3,291", change: "+8%", icon: Users },
-  { label: "Views", value: "45.2K", change: "+18%", icon: Eye },
-];
+// User type from database
+interface UserProfile {
+  id: string;
+  user_id: string;
+  name: string;
+  email: string;
+  created_at: string;
+}
 
 const Admin = () => {
+  const { user, loading, isAdmin, signOut } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("Dashboard");
-  const [jobs, setJobs] = useState<Job[]>(mockJobs);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
-  const filteredJobs = jobs.filter(
-    (j) => j.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           j.company.toLowerCase().includes(searchQuery.toLowerCase())
+  // Redirect non-admin users
+  useEffect(() => {
+    if (!loading && (!user || !isAdmin)) {
+      if (!user) navigate("/login");
+    }
+  }, [user, loading, isAdmin, navigate]);
+
+  // Fetch all users from database (admin only)
+  const fetchUsers = async () => {
+    setLoadingUsers(true);
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      toast.error("Failed to load users");
+    } else {
+      setUsers(data || []);
+    }
+    setLoadingUsers(false);
+  };
+
+  useEffect(() => {
+    if (isAdmin) fetchUsers();
+  }, [isAdmin]);
+
+  // Delete a user (removes from auth + cascades to profiles)
+  const deleteUser = async (userId: string) => {
+    if (!confirm("Are you sure you want to delete this user?")) return;
+    
+    // Delete profile (cascade will handle user_roles)
+    const { error } = await supabase
+      .from("profiles")
+      .delete()
+      .eq("user_id", userId);
+
+    if (error) {
+      toast.error("Failed to delete user");
+    } else {
+      toast.success("User deleted successfully");
+      setUsers(users.filter((u) => u.user_id !== userId));
+    }
+  };
+
+  // Filter users by search
+  const filteredUsers = users.filter(
+    (u) =>
+      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const deleteJob = (id: string) => {
-    setJobs(jobs.filter((j) => j.id !== id));
-  };
+  // Stats based on real data
+  const statsCards = [
+    { label: "Total Users", value: users.length.toString(), icon: Users, color: "text-primary" },
+    { label: "New Today", value: users.filter((u) => new Date(u.created_at).toDateString() === new Date().toDateString()).length.toString(), icon: TrendingUp, color: "text-primary" },
+  ];
+
+  if (loading) {
+    return <div className="min-h-screen bg-background flex items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>;
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Shield className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <h1 className="font-display text-2xl font-bold mb-2">Admin Access Required</h1>
+          <p className="text-muted-foreground mb-4">You need admin privileges to access this page.</p>
+          <Link to="/"><Button>Go Home</Button></Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Sidebar */}
+      {/* Sidebar — professional admin look */}
       <aside className="w-64 bg-sidebar border-r border-sidebar-border p-4 flex flex-col shrink-0 hidden lg:flex">
         <Link to="/" className="flex items-center gap-2.5 mb-8 px-2">
           <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
-            <Briefcase className="w-4 h-4 text-sidebar-primary-foreground" />
+            <Shield className="w-4 h-4 text-sidebar-primary-foreground" />
           </div>
-          <span className="font-display font-bold text-sidebar-foreground">AI Job Portal</span>
+          <span className="font-display font-bold text-sidebar-foreground">Admin Panel</span>
         </Link>
         <nav className="space-y-1 flex-1">
           {sidebarItems.map((item) => (
@@ -63,55 +139,41 @@ const Admin = () => {
             </button>
           ))}
         </nav>
-        <Link to="/">
-          <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground/50 hover:text-sidebar-foreground w-full">
-            <LogOut className="w-4 h-4" /> Back to Site
-          </button>
-        </Link>
+        <button
+          onClick={async () => { await signOut(); navigate("/login"); }}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground/50 hover:text-sidebar-foreground w-full"
+        >
+          <LogOut className="w-4 h-4" /> Logout
+        </button>
       </aside>
 
       {/* Main Content */}
       <main className="flex-1 p-6 lg:p-8 overflow-auto">
         <div className="max-w-6xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h1 className="font-display text-2xl font-bold">
-                  {activeTab}
-                </h1>
-                <p className="text-muted-foreground text-sm mt-1">Welcome back, Admin</p>
-              </div>
-              <Button className="glow">
-                <Plus className="w-4 h-4 mr-2" /> Post New Job
-              </Button>
+            <div className="mb-8">
+              <h1 className="font-display text-2xl font-bold">{activeTab}</h1>
+              <p className="text-muted-foreground text-sm mt-1">Welcome back, Admin</p>
             </div>
 
-            {/* Stats */}
-            {activeTab === "Dashboard" && (
-              <>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                  {statsCards.map((stat, i) => (
-                    <div key={stat.label} className="bg-card rounded-xl border border-border p-5 card-elevated">
-                      <div className="flex items-center justify-between">
-                        <stat.icon className="w-5 h-5 text-muted-foreground" />
-                        <span className="text-xs font-medium text-primary">{stat.change}</span>
-                      </div>
-                      <p className="font-display text-2xl font-bold mt-3">{stat.value}</p>
-                      <p className="text-sm text-muted-foreground mt-0.5">{stat.label}</p>
-                    </div>
-                  ))}
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              {statsCards.map((stat) => (
+                <div key={stat.label} className="bg-card rounded-xl border border-border p-5 card-elevated">
+                  <stat.icon className="w-5 h-5 text-muted-foreground" />
+                  <p className="font-display text-2xl font-bold mt-3">{stat.value}</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">{stat.label}</p>
                 </div>
+              ))}
+            </div>
 
-                <h2 className="font-display text-lg font-semibold mb-4">Recent Jobs</h2>
-              </>
-            )}
-
-            {/* Jobs Table */}
+            {/* Users Table — shows ALL registered users */}
+            <h2 className="font-display text-lg font-semibold mb-4">All Registered Users</h2>
             <div className="mb-4">
               <div className="relative">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search jobs..."
+                  placeholder="Search users by name or email..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 h-10 max-w-sm"
@@ -124,50 +186,42 @@ const Admin = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-border bg-muted/50">
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Job</th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Type</th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Location</th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Salary</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">#</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Name</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email</th>
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Date Joined</th>
                       <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredJobs.map((job) => (
-                      <tr key={job.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                    {filteredUsers.map((u, i) => (
+                      <tr key={u.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                        <td className="px-5 py-4 text-sm text-muted-foreground">{i + 1}</td>
                         <td className="px-5 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary font-display font-bold flex items-center justify-center text-xs">
-                              {job.logo}
-                            </div>
-                            <div>
-                              <p className="font-medium text-sm">{job.title}</p>
-                              <p className="text-xs text-muted-foreground">{job.company}</p>
-                            </div>
-                          </div>
+                          <p className="font-medium text-sm">{u.name || "—"}</p>
                         </td>
-                        <td className="px-5 py-4 hidden md:table-cell">
-                          <Badge variant="secondary" className="text-xs">{job.type}</Badge>
+                        <td className="px-5 py-4 text-sm text-muted-foreground">{u.email}</td>
+                        <td className="px-5 py-4 text-sm text-muted-foreground hidden md:table-cell">
+                          {new Date(u.created_at).toLocaleDateString()}
                         </td>
-                        <td className="px-5 py-4 text-sm text-muted-foreground hidden md:table-cell">{job.location}</td>
-                        <td className="px-5 py-4 text-sm font-medium hidden lg:table-cell">{job.salary}</td>
                         <td className="px-5 py-4 text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Link to={`/jobs/${job.id}`}>
-                              <Button variant="ghost" size="sm"><Eye className="w-3.5 h-3.5" /></Button>
-                            </Link>
-                            <Button variant="ghost" size="sm"><Edit className="w-3.5 h-3.5" /></Button>
-                            <Button variant="ghost" size="sm" onClick={() => deleteJob(job.id)}>
-                              <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                            </Button>
-                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteUser(u.user_id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              {filteredJobs.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">No jobs found</div>
+              {loadingUsers && <div className="text-center py-8 text-muted-foreground">Loading users...</div>}
+              {!loadingUsers && filteredUsers.length === 0 && (
+                <div className="text-center py-12 text-muted-foreground">No users found</div>
               )}
             </div>
           </motion.div>
