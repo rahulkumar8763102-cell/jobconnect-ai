@@ -1,62 +1,66 @@
 // AuthContext.tsx — Provides authentication state across the app
-// Uses Lovable Cloud (Supabase) for real user authentication
+// Uses Lovable Cloud for real user authentication
+// Supports user, recruiter, and admin roles
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
-// Define the shape of our auth context
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
   isAdmin: boolean;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: any }>;
+  isRecruiter: boolean;
+  userRole: string;
+  signUp: (email: string, password: string, name: string, meta?: { phone?: string; location?: string; role?: string }) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// AuthProvider wraps the app and manages user session
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isRecruiter, setIsRecruiter] = useState(false);
+  const [userRole, setUserRole] = useState("user");
 
-  // Check if the current user has admin role
-  const checkAdminRole = async (userId: string) => {
+  // Check user roles from the user_roles table
+  const checkRoles = async (userId: string) => {
     const { data } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", userId)
-      .eq("role", "admin")
-      .maybeSingle();
-    setIsAdmin(!!data);
+      .eq("user_id", userId);
+    
+    const roles = data?.map(r => r.role) || [];
+    setIsAdmin(roles.includes("admin"));
+    setIsRecruiter(roles.includes("recruiter"));
+    setUserRole(roles.includes("admin") ? "admin" : roles.includes("recruiter") ? "recruiter" : "user");
   };
 
   useEffect(() => {
-    // Listen for auth state changes FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          // Use setTimeout to avoid Supabase deadlock
-          setTimeout(() => checkAdminRole(session.user.id), 0);
+          setTimeout(() => checkRoles(session.user.id), 0);
         } else {
           setIsAdmin(false);
+          setIsRecruiter(false);
+          setUserRole("user");
         }
         setLoading(false);
       }
     );
 
-    // Then get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        checkAdminRole(session.user.id);
+        checkRoles(session.user.id);
       }
       setLoading(false);
     });
@@ -64,18 +68,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Sign up a new user with name stored in metadata
-  const signUp = async (email: string, password: string, name: string) => {
+  // Sign up with extended metadata (phone, location, role)
+  const signUp = async (email: string, password: string, name: string, meta?: { phone?: string; location?: string; role?: string }) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name }, // This gets saved to profiles via trigger
+        data: { name, phone: meta?.phone || "", location: meta?.location || "", role: meta?.role || "user" },
         emailRedirectTo: window.location.origin,
       },
     });
     if (error) return { error };
-    // If auto-confirm is on but no session, sign in explicitly
     if (!data.session) {
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       return { error: signInError };
@@ -83,26 +86,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error: null };
   };
 
-  // Sign in with email and password
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error };
   };
 
-  // Sign out the current user
   const signOut = async () => {
     await supabase.auth.signOut();
     setIsAdmin(false);
+    setIsRecruiter(false);
+    setUserRole("user");
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, isRecruiter, userRole, signUp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Custom hook to use auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error("useAuth must be used within AuthProvider");
