@@ -1,4 +1,4 @@
-// Login.tsx — User sign-in page with real authentication
+// Login.tsx — User/Recruiter/Admin sign-in
 import { Link, useNavigate } from "react-router-dom";
 import { Briefcase, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,10 +20,7 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      toast.error("Please fill in all fields");
-      return;
-    }
+    if (!email || !password) { toast.error("Please fill in all fields"); return; }
     setLoading(true);
     const { error } = await signIn(email, password);
     setLoading(false);
@@ -45,7 +42,7 @@ const Login = () => {
               <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center glow">
                 <Briefcase className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="font-display font-bold text-2xl text-foreground">AI Job Portal</span>
+              <span className="font-display font-bold text-2xl text-foreground">JobTatkal AI</span>
             </Link>
             <h1 className="text-2xl font-display font-bold text-foreground">Welcome back</h1>
             <p className="text-muted-foreground mt-1">Sign in to your account</p>
@@ -74,6 +71,12 @@ const Login = () => {
                 {loading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
+
+            {/* Quick login hints for demo */}
+            <div className="mt-4 p-3 bg-muted rounded-lg">
+              <p className="text-xs font-semibold text-muted-foreground mb-1">Demo Accounts:</p>
+              <p className="text-xs text-muted-foreground">Admin: admin@jobportal.com / admin123</p>
+            </div>
           </div>
 
           <p className="text-center text-sm text-muted-foreground mt-6">

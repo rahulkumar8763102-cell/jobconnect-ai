@@ -1,6 +1,6 @@
-// Navbar.tsx — Navigation with auth-aware buttons
+// Navbar.tsx — Navigation with auth-aware buttons for JobTatkal AI
 import { Link, useLocation } from "react-router-dom";
-import { Briefcase, Menu, X, Shield, LogOut, LayoutDashboard } from "lucide-react";
+import { Briefcase, Menu, X, Shield, LogOut, LayoutDashboard, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,7 +17,7 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const isHero = location.pathname === "/";
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, isAdmin, isRecruiter, signOut } = useAuth();
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isHero ? "bg-transparent" : "bg-card/80 backdrop-blur-xl border-b border-border"}`}>
@@ -28,29 +28,19 @@ const Navbar = () => {
               <Briefcase className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className={`font-display font-bold text-xl tracking-tight ${isHero ? "text-primary-foreground" : "text-foreground"}`}>
-              AI Job Portal
+              JobTatkal AI
             </span>
           </Link>
 
           <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  location.pathname === link.to
-                    ? "text-primary bg-primary/10"
-                    : isHero
-                    ? "text-primary-foreground/70 hover:text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
+              <Link key={link.to} to={link.to}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${location.pathname === link.to ? "text-primary bg-primary/10" : isHero ? "text-primary-foreground/70 hover:text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
                 {link.label}
               </Link>
             ))}
           </div>
 
-          {/* Auth-aware action buttons */}
           <div className="hidden md:flex items-center gap-3">
             {user ? (
               <>
@@ -58,6 +48,13 @@ const Navbar = () => {
                   <Link to="/admin">
                     <Button variant="ghost" size="sm" className={isHero ? "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10" : ""}>
                       <Shield className="w-4 h-4 mr-1.5" /> Admin
+                    </Button>
+                  </Link>
+                )}
+                {isRecruiter && (
+                  <Link to="/recruiter">
+                    <Button variant="ghost" size="sm" className={isHero ? "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10" : ""}>
+                      <UserPlus className="w-4 h-4 mr-1.5" /> Recruiter
                     </Button>
                   </Link>
                 )}
@@ -73,9 +70,7 @@ const Navbar = () => {
             ) : (
               <>
                 <Link to="/login">
-                  <Button variant="ghost" size="sm" className={isHero ? "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10" : ""}>
-                    Sign In
-                  </Button>
+                  <Button variant="ghost" size="sm" className={isHero ? "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10" : ""}>Sign In</Button>
                 </Link>
                 <Link to="/register">
                   <Button size="sm" className="glow">Get Started</Button>
@@ -105,6 +100,11 @@ const Navbar = () => {
                     <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
                       <Button variant="ghost" size="sm" className="w-full justify-start"><LayoutDashboard className="w-4 h-4 mr-1.5" /> Dashboard</Button>
                     </Link>
+                    {isRecruiter && (
+                      <Link to="/recruiter" onClick={() => setMobileOpen(false)}>
+                        <Button variant="ghost" size="sm" className="w-full justify-start"><UserPlus className="w-4 h-4 mr-1.5" /> Recruiter</Button>
+                      </Link>
+                    )}
                     {isAdmin && (
                       <Link to="/admin" onClick={() => setMobileOpen(false)}>
                         <Button variant="ghost" size="sm" className="w-full justify-start"><Shield className="w-4 h-4 mr-1.5" /> Admin</Button>
@@ -116,12 +116,8 @@ const Navbar = () => {
                   </>
                 ) : (
                   <>
-                    <Link to="/login" onClick={() => setMobileOpen(false)}>
-                      <Button variant="ghost" size="sm" className="w-full justify-start">Sign In</Button>
-                    </Link>
-                    <Link to="/register" onClick={() => setMobileOpen(false)}>
-                      <Button size="sm" className="w-full">Get Started</Button>
-                    </Link>
+                    <Link to="/login" onClick={() => setMobileOpen(false)}><Button variant="ghost" size="sm" className="w-full justify-start">Sign In</Button></Link>
+                    <Link to="/register" onClick={() => setMobileOpen(false)}><Button size="sm" className="w-full">Get Started</Button></Link>
                   </>
                 )}
               </div>
